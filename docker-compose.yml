@@ -1,0 +1,37 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - redis
+      - rabbitmq
+    environment:
+      - PORT=3000
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://rabbitmq
+  worker:
+    build: .
+    command: npx ts-node src/worker.ts
+    depends_on:
+      - redis
+      - rabbitmq
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://rabbitmq
+    volumes:
+      - .:/usr/src/app
+    deploy:
+      replicas: 10
+  redis:
+    image: redis:7
+    ports:
+      - '6379:6379'
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'
